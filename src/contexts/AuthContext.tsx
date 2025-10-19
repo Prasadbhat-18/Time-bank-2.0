@@ -9,9 +9,11 @@ interface AuthContextType {
   user: User | null;
   firebaseUser: FirebaseUser | null;
   loading: boolean;
+  isDemo: boolean;
   login: (email: string, password: string) => Promise<void>;
   loginWithPhone: (phone: string, code: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
+  loginDemo: () => Promise<void>;
   register: (email: string, password: string, username: string) => Promise<void>;
   registerWithPhone: (phone: string, username: string, code: string) => Promise<void>;
   resetPassword: (email: string, newPassword?: string) => Promise<void>;
@@ -42,6 +44,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDemo, setIsDemo] = useState(false);
 
   // Helper function to save user to localStorage
   const saveUserToStorage = (user: User | null) => {
@@ -494,6 +497,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const loginDemo = async () => {
+    // Create a demo user with limited permissions
+    const demoUser: User = {
+      ...mockUser,
+      id: 'demo-user',
+      username: 'demo_viewer',
+      bio: 'Demo user - browse only mode'
+    };
+    setUser(demoUser);
+    setIsDemo(true);
+    // Don't save demo user to localStorage to keep it temporary
+  };
+
   const resetPassword = async (email: string, newPassword?: string) => {
     if (isFirebaseConfigured() && auth) {
       // Send password reset email only (Firebase handles the flow)
@@ -540,6 +556,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(null);
       saveUserToStorage(null);
     }
+    setIsDemo(false); // Reset demo state on logout
   };
 
   const updateUser = async (updates: Partial<User>) => {
@@ -558,7 +575,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ user, firebaseUser, loading, login, loginWithPhone, loginWithGoogle, register, registerWithPhone, resetPassword, changePassword, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, firebaseUser, loading, isDemo, login, loginWithPhone, loginWithGoogle, loginDemo, register, registerWithPhone, resetPassword, changePassword, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

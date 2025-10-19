@@ -8,7 +8,7 @@ interface LoginFormProps {
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
-  const { login, loginWithPhone, loginWithGoogle } = useAuth();
+  const { login, loginWithPhone, loginWithGoogle, loginDemo } = useAuth();
   const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -85,6 +85,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
   };
 
   const handleForgotPassword = () => setShowReset(true);
+  
+  const handleDemoLogin = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      await loginDemo();
+    } catch (err: any) {
+      setError(err.message || 'Demo login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden">
@@ -388,6 +400,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
                 className="text-cyan-400/70 hover:text-cyan-300 text-sm transition-colors"
               >
                 Forgot Password?
+              </button>
+              
+              <div className="text-white/40">•</div>
+              
+              <button
+                type="button"
+                onClick={handleDemoLogin}
+                className="text-emerald-400 hover:text-emerald-300 text-sm font-semibold transition-colors"
+              >
+                Browse as Demo
               </button>
             </div>
           </div>

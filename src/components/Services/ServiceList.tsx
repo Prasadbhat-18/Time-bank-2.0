@@ -11,7 +11,7 @@ import { LevelBadge } from '../Level/LevelProgress';
 import { InfiniteCarousel } from './InfiniteCarousel';
 
 export const ServiceList: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isDemo } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
@@ -290,7 +290,7 @@ export const ServiceList: React.FC = () => {
                       </button>
                     </div>
 
-                    {service.provider_id !== user?.id ? (
+                    {(service.provider_id !== user?.id || isDemo) ? (
                       <button
                         onClick={() => handleBookService(service)}
                         className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm rounded-lg transition"
