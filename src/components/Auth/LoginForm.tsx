@@ -284,31 +284,31 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
         );
       })}
       
-      {/* Digital Clock Display - Time Portal Style */}
-      <div className="absolute top-4 md:top-8 left-1/2 transform -translate-x-1/2 z-20">
-        <div className="relative bg-black/40 backdrop-blur-md px-6 md:px-8 py-3 md:py-4 rounded-2xl border-2 border-cyan-500/30 shadow-2xl"
+      {/* Digital Clock Display - Time Portal Style - Fixed positioning */}
+      <div className="absolute top-6 md:top-10 left-1/2 transform -translate-x-1/2 z-10">
+        <div className="relative bg-black/50 backdrop-blur-md px-4 md:px-6 py-2 md:py-3 rounded-xl border border-cyan-500/30 shadow-xl"
           style={{
-            boxShadow: '0 0 40px rgba(34, 211, 238, 0.3), inset 0 0 20px rgba(34, 211, 238, 0.1)'
+            boxShadow: '0 0 30px rgba(34, 211, 238, 0.2), inset 0 0 15px rgba(34, 211, 238, 0.05)'
           }}
         >
           <div className="text-center relative">
-            <div className="text-2xl md:text-3xl font-mono font-bold tracking-wider bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent animate-pulse">
+            <div className="text-lg md:text-xl font-mono font-bold tracking-wider bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent animate-pulse">
               {currentTime.toLocaleTimeString()}
             </div>
-            <div className="text-xs md:text-sm text-cyan-300/80 mt-1 font-medium tracking-wide">
-              {currentTime.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+            <div className="text-[10px] md:text-xs text-cyan-300/70 mt-0.5 font-medium tracking-wide">
+              {currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
             </div>
             {/* Corner Accents */}
-            <div className="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 border-cyan-400" />
-            <div className="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 border-cyan-400" />
-            <div className="absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 border-cyan-400" />
-            <div className="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 border-cyan-400" />
+            <div className="absolute -top-0.5 -left-0.5 w-2 h-2 border-t border-l border-cyan-400" />
+            <div className="absolute -top-0.5 -right-0.5 w-2 h-2 border-t border-r border-cyan-400" />
+            <div className="absolute -bottom-0.5 -left-0.5 w-2 h-2 border-b border-l border-cyan-400" />
+            <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 border-b border-r border-cyan-400" />
           </div>
         </div>
       </div>
 
       {/* Main Login Card - Glassmorphic with 3D Parallax */}
-      <div className="relative z-10 w-full max-w-md mx-auto mt-24 md:mt-0">
+      <div className="relative z-20 w-full max-w-md mx-auto mt-20 md:mt-8">
         <div 
           className="relative p-6 sm:p-7 md:p-8 bg-gradient-to-br from-slate-900/85 via-indigo-900/85 to-purple-900/85 backdrop-blur-2xl rounded-3xl border-2 border-cyan-500/40 overflow-hidden transition-transform duration-300 ease-out"
           style={{
