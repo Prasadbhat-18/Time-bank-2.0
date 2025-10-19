@@ -30,7 +30,12 @@ const mockUser: User = {
   bio: 'Demo user for testing TimeBank application',
   reputation_score: 4.8,
   total_reviews: 25,
-  created_at: new Date().toISOString()
+  created_at: new Date().toISOString(),
+  level: 2,
+  experience_points: 150,
+  services_completed: 5,
+  services_requested: 2,
+  custom_credits_enabled: false
 };
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {

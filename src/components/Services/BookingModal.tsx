@@ -5,7 +5,6 @@ import { Service } from '../../types';
 import { dataService } from '../../services/dataService';
 import { ChatWindow } from '../Chat/ChatWindow';
 import ServiceBalanceModal from './ServiceBalanceModal';
-import { canRequestService } from '../../services/levelService';
 
 interface BookingModalProps {
   service: Service;
@@ -24,10 +23,19 @@ export const BookingModal: React.FC<BookingModalProps> = ({ service, onClose, on
   const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [showLimitWarning, setShowLimitWarning] = useState(false);
 
-  // Check service balance
+  // Check service balance - user can request until they have 3 more requests than completions
   const servicesCompleted = user?.services_completed || 0;
   const servicesRequested = user?.services_requested || 0;
-  const canRequest = canRequestService(servicesCompleted, servicesRequested);
+  const serviceBalance = servicesRequested - servicesCompleted;
+  const canRequest = serviceBalance < 3;
+  
+  // Debug: Log current values
+  console.log('BookingModal Debug:', {
+    servicesCompleted,
+    servicesRequested,
+    serviceBalance,
+    canRequest
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,10 +58,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({ service, onClose, on
         confirmation_status: 'pending'
       });
 
-      // Only show the limit warning if this booking puts the user over the limit (i.e., after booking, canRequestService returns false)
+      // Only show the limit warning after booking 3 more services than provided
       const newServicesRequested = servicesRequested + 1;
-      const isBarred = !canRequestService(servicesCompleted, newServicesRequested);
-      if (isBarred) {
+      const serviceBalance = newServicesRequested - servicesCompleted;
+      
+      if (serviceBalance >= 3) {
         setShowLimitWarning(true);
       } else {
         onBooked();
