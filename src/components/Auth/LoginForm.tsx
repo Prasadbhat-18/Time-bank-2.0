@@ -104,222 +104,59 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
 
   const handleForgotPassword = () => setShowReset(true);
 
-  // --- Timebank 3D Login: Exchange Time, Not Money ---
+  // --- Modern TimeBank Login: Simplified & Aesthetic ---
   return (
-    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden px-4 py-6 md:py-8">
-      {/* Time Vortex Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-indigo-950 to-purple-950" />
+    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden px-4 py-8">
+      {/* Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900" />
       
-      {/* Animated Radial Vortex */}
-      <div className="absolute inset-0 opacity-40" style={{
-        background: 'radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.3) 0%, rgba(99, 102, 241, 0.2) 30%, transparent 70%)',
-        animation: 'vortexPulse 8s ease-in-out infinite'
+      {/* Subtle Pattern Overlay */}
+      <div className="absolute inset-0 opacity-10" style={{
+        backgroundImage: 'radial-gradient(circle at 25% 25%, #00d4ff 0%, transparent 50%), radial-gradient(circle at 75% 75%, #8b5cf6 0%, transparent 50%)',
+        backgroundSize: '400px 400px'
       }} />
       
-      {/* Rotating Time Portal Rings */}
-      <div className="absolute inset-0 opacity-15" style={{
-        background: 'repeating-radial-gradient(circle at 50% 50%, transparent 0px, transparent 80px, rgba(34, 211, 238, 0.2) 80px, rgba(34, 211, 238, 0.2) 82px)',
-        animation: 'rotateClockwise 30s linear infinite'
-      }} />
-      
-      {/* Animated Grid with Time Flow */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0" style={{
-          backgroundImage: 'linear-gradient(rgba(34, 211, 238, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(34, 211, 238, 0.2) 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
-          animation: 'gridFlow 20s linear infinite'
-        }} />
-      </div>
+      {/* Floating Orbs */}
+      <div className="absolute top-20 left-20 w-32 h-32 bg-cyan-500/20 rounded-full blur-xl animate-pulse" />
+      <div className="absolute bottom-20 right-20 w-40 h-40 bg-purple-500/20 rounded-full blur-xl animate-pulse" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-1/2 right-1/4 w-24 h-24 bg-blue-500/20 rounded-full blur-xl animate-bounce" />
 
-      {/* 3D Floating Clocks with Perspective */}
-      <div className="absolute inset-0 perspective-1000" style={{ perspective: '1000px' }}>
-        {[...Array(6)].map((_, i) => {
-          const size = 120 + (i % 3) * 40;
-          const depth = -200 - (i * 150);
-          return (
-            <div 
-              key={i}
-              className="absolute animate-float-3d"
-              style={{
-                left: `${15 + (i % 3) * 30}%`,
-                top: `${10 + Math.floor(i / 3) * 45}%`,
-                transform: `translateZ(${depth}px) rotateY(${i * 30}deg)`,
-                animationDelay: `${i * 0.8}s`,
-                animationDuration: `${8 + i}s`
-              }}
-            >
-              {/* 3D Clock Face */}
-              <div 
-                className="relative rounded-full border-4 border-cyan-400/30 shadow-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-sm"
-                style={{
-                  width: `${size}px`,
-                  height: `${size}px`,
-                  boxShadow: `
-                    0 0 60px rgba(59, 130, 246, 0.4),
-                    0 0 120px rgba(147, 51, 234, 0.3),
-                    inset 0 0 60px rgba(59, 130, 246, 0.1)
-                  `,
-                  transform: 'rotateX(20deg)',
-                  animation: `rotate3d ${15 + i * 2}s linear infinite`
-                }}
-              >
-                {/* Clock Center Glow */}
-                <div className="absolute inset-0 rounded-full bg-gradient-radial from-cyan-400/20 to-transparent animate-pulse" />
-                
-                {/* Hour Markers */}
-                {[...Array(12)].map((_, mark) => (
-                  <div
-                    key={mark}
-                    className="absolute bg-gradient-to-b from-cyan-300 to-blue-400 shadow-glow"
-                    style={{
-                      width: mark % 3 === 0 ? '3px' : '2px',
-                      height: mark % 3 === 0 ? `${size * 0.15}px` : `${size * 0.1}px`,
-                      left: '50%',
-                      top: '8%',
-                      transformOrigin: `50% ${size * 0.42}px`,
-                      transform: `translateX(-50%) rotate(${mark * 30}deg)`,
-                      boxShadow: '0 0 10px rgba(34, 211, 238, 0.8)'
-                    }}
-                  />
-                ))}
-                
-                {/* Animated Clock Hands */}
-                <div 
-                  className="absolute bg-gradient-to-t from-yellow-400 to-orange-500 shadow-lg"
-                  style={{
-                    width: '4px',
-                    height: `${size * 0.25}px`,
-                    left: '50%',
-                    top: '50%',
-                    transformOrigin: `50% 0`,
-                    transform: `translateX(-50%) translateY(-100%) rotate(${(currentTime.getHours() % 12) * 30 + currentTime.getMinutes() * 0.5}deg)`,
-                    borderRadius: '2px',
-                    boxShadow: '0 0 20px rgba(251, 191, 36, 0.8)'
-                  }}
-                />
-                <div 
-                  className="absolute bg-gradient-to-t from-cyan-300 to-blue-400"
-                  style={{
-                    width: '3px',
-                    height: `${size * 0.35}px`,
-                    left: '50%',
-                    top: '50%',
-                    transformOrigin: `50% 0`,
-                    transform: `translateX(-50%) translateY(-100%) rotate(${currentTime.getMinutes() * 6}deg)`,
-                    borderRadius: '2px',
-                    boxShadow: '0 0 15px rgba(34, 211, 238, 0.8)'
-                  }}
-                />
-                <div 
-                  className="absolute bg-red-500"
-                  style={{
-                    width: '1.5px',
-                    height: `${size * 0.4}px`,
-                    left: '50%',
-                    top: '50%',
-                    transformOrigin: `50% 0`,
-                    transform: `translateX(-50%) translateY(-100%) rotate(${currentTime.getSeconds() * 6}deg)`,
-                    borderRadius: '1px',
-                    boxShadow: '0 0 10px rgba(239, 68, 68, 0.8)'
-                  }}
-                />
-                
-                {/* Center Dot */}
-                <div className="absolute top-1/2 left-1/2 w-3 h-3 bg-gradient-to-br from-yellow-300 to-orange-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 shadow-xl" style={{
-                  boxShadow: '0 0 20px rgba(251, 191, 36, 0.9)'
-                }} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Floating Time Particles */}
-      {[...Array(30)].map((_, i) => (
-        <div 
-          key={i}
-          className="absolute w-1 h-1 bg-cyan-400 rounded-full animate-particle"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 5}s`,
-            animationDuration: `${3 + Math.random() * 4}s`,
-            opacity: Math.random() * 0.7 + 0.3,
-            boxShadow: '0 0 10px rgba(34, 211, 238, 0.8)'
-          }}
-        />
-      ))}
-
-      {/* Floating Gears - Symbolizing Exchange Mechanism */}
-      {[...Array(8)].map((_, i) => {
-        const size = 40 + (i % 3) * 30;
-        return (
-          <div 
-            key={`gear-${i}`}
-            className="absolute opacity-10 pointer-events-none"
-            style={{
-              left: `${10 + (i % 4) * 25}%`,
-              top: `${15 + Math.floor(i / 4) * 50}%`,
-              animation: `rotateClockwise ${20 + i * 3}s linear infinite`,
-              animationDirection: i % 2 === 0 ? 'normal' : 'reverse'
-            }}
-          >
-            <svg width={size} height={size} viewBox="0 0 100 100" className="drop-shadow-lg">
-              <circle cx="50" cy="50" r="35" fill="none" stroke="rgba(34, 211, 238, 0.4)" strokeWidth="4" />
-              <circle cx="50" cy="50" r="20" fill="rgba(34, 211, 238, 0.2)" stroke="rgba(34, 211, 238, 0.5)" strokeWidth="3" />
-              {[...Array(8)].map((_, tooth) => (
-                <rect
-                  key={tooth}
-                  x="47"
-                  y="5"
-                  width="6"
-                  height="15"
-                  fill="rgba(34, 211, 238, 0.3)"
-                  transform={`rotate(${tooth * 45} 50 50)`}
-                  rx="1"
-                />
-              ))}
-            </svg>
-          </div>
-        );
-      })}
-      
-      {/* Digital Clock Display - Time Portal Style - Fixed positioning */}
-      <div className="absolute top-6 md:top-10 left-1/2 transform -translate-x-1/2 z-10">
-        <div className="relative bg-black/50 backdrop-blur-md px-4 md:px-6 py-2 md:py-3 rounded-xl border border-cyan-500/30 shadow-xl"
-          style={{
-            boxShadow: '0 0 30px rgba(34, 211, 238, 0.2), inset 0 0 15px rgba(34, 211, 238, 0.05)'
-          }}
-        >
-          <div className="text-center relative">
-            <div className="text-lg md:text-xl font-mono font-bold tracking-wider bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent animate-pulse">
+      {/* Digital Clock - Clean & Compact */}
+      <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-30">
+        <div className="bg-black/30 backdrop-blur-md px-6 py-3 rounded-2xl border border-cyan-400/30">
+          <div className="text-center">
+            <div className="text-2xl font-mono font-bold text-cyan-300 tracking-wider">
               {currentTime.toLocaleTimeString()}
             </div>
-            <div className="text-[10px] md:text-xs text-cyan-300/70 mt-0.5 font-medium tracking-wide">
-              {currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+            <div className="text-xs text-cyan-400/70 mt-1">
+              {currentTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </div>
-            {/* Corner Accents */}
-            <div className="absolute -top-0.5 -left-0.5 w-2 h-2 border-t border-l border-cyan-400" />
-            <div className="absolute -top-0.5 -right-0.5 w-2 h-2 border-t border-r border-cyan-400" />
-            <div className="absolute -bottom-0.5 -left-0.5 w-2 h-2 border-b border-l border-cyan-400" />
-            <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 border-b border-r border-cyan-400" />
           </div>
         </div>
       </div>
 
-      {/* Main Login Card - Glassmorphic with 3D Parallax */}
-      <div className="relative z-20 w-full max-w-md mx-auto mt-20 md:mt-8">
+      {/* Main Content Container */}
+      <div className="relative z-20 w-full max-w-lg mx-auto">
+        {/* Header Section */}
+        <div className="text-center mb-8">
+          {/* Logo */}
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-2xl mb-6 shadow-2xl">
+            <Clock className="w-10 h-10 text-white" />
+          </div>
+          
+          {/* Brand */}
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent mb-3">
+            TimeBank
+          </h1>
+          <p className="text-cyan-300 text-lg font-medium mb-2">Exchange Time, Not Money</p>
+          <p className="text-slate-400 text-sm">Secure • Simple • Fair</p>
+        </div>
+
+        {/* Login Card */}
         <div 
-          className="relative p-6 sm:p-7 md:p-8 bg-gradient-to-br from-slate-900/85 via-indigo-900/85 to-purple-900/85 backdrop-blur-2xl rounded-3xl border-2 border-cyan-500/40 overflow-hidden transition-transform duration-300 ease-out"
+          className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-2xl"
           style={{
-            boxShadow: `
-              0 0 100px rgba(34, 211, 238, 0.35),
-              0 25px 70px rgba(0, 0, 0, 0.6),
-              inset 0 0 80px rgba(34, 211, 238, 0.08),
-              inset 0 2px 0 rgba(255, 255, 255, 0.1)
-            `,
-            transform: `perspective(1000px) rotateX(${cardTilt.x}deg) rotateY(${cardTilt.y}deg) translateZ(20px)`,
-            transformStyle: 'preserve-3d'
+            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5), 0 0 80px rgba(34, 211, 238, 0.1)'
           }}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
