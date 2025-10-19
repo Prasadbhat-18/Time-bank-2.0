@@ -229,8 +229,8 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:bg-gray-950 dark:text-emerald-400 dark:from-gray-950 dark:to-gray-950 pb-20 md:pb-4">
-      {/* Mobile-First Header */}
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:bg-gray-950 dark:text-emerald-400 dark:from-gray-950 dark:to-gray-950 pb-20 md:pb-4">
+  {/* ...existing code... */}
       <header className="bg-white shadow-lg border-b border-gray-200 dark:bg-gray-900 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 md:h-16">
