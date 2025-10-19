@@ -13,7 +13,7 @@ interface Props {
   embedded?: boolean; // When true, renders as embedded component, not full-screen overlay
 }
 
-export const ChatWindow: React.FC<Props> = ({ peerId, service, onClose, embedded: _embedded = false }) => {
+export const ChatWindow: React.FC<Props> = ({ peerId, service, onClose, embedded = false }) => {
   const { user } = useAuth();
   const { getOrCreateKeyPair, exportPublicJwk, importPublicJwk, deriveSharedKey, encrypt, decrypt } = useE2EE();
   const [chat, setChat] = useState<Chat | null>(null);
@@ -181,9 +181,10 @@ export const ChatWindow: React.FC<Props> = ({ peerId, service, onClose, embedded
       pendingQueue.current.push(text);
       return;
     }
-  await sendEncrypted(text);
-  // flash a subtle "sent" indicator
-  setSentTick((n) => n + 1);
+    await sendEncrypted(text);
+    // Show "sent" indicator and auto-hide after 2s
+    setSentTick(1);
+    setTimeout(() => setSentTick(0), 2000);
   };
 
   const handleInputChange = async (val: string) => {
@@ -197,14 +198,14 @@ export const ChatWindow: React.FC<Props> = ({ peerId, service, onClose, embedded
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl bg-white rounded-xl shadow-xl border border-gray-200 flex flex-col max-h-[80vh]">
+    <div className={`${embedded ? 'w-full flex flex-col' : 'fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4'}`}>
+      <div className={`${embedded ? 'flex-1 flex flex-col bg-white rounded-lg border border-gray-200' : 'w-full max-w-2xl bg-white rounded-xl shadow-xl border border-gray-200 flex flex-col max-h-[80vh]'}`}>
         <div className="p-4 border-b border-gray-200 flex items-center justify-between">
           <div>
-            <div className="font-semibold">Chat with {peerName || peerId}</div>
+            <div className="font-semibold text-gray-800">Chat with {peerName || peerId}</div>
             {service && <div className="text-sm text-gray-600">Regarding: {service.title}</div>}
           </div>
-          <div className="flex items-center gap-2">
+          {!embedded && (
             <button
               onClick={async () => {
                 if (user && chat) {
@@ -212,13 +213,13 @@ export const ChatWindow: React.FC<Props> = ({ peerId, service, onClose, embedded
                 }
                 onClose && onClose();
               }}
-              className="px-3 py-1.5 rounded bg-gray-100"
+              className="px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-sm font-medium"
             >
               Close
             </button>
-          </div>
+          )}
         </div>
-        <div ref={listRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div ref={listRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
           {(decryptedRef.current || []).map((m, idx, arr) => {
             const curDate = new Date(m.created_at);
             const prev = idx > 0 ? new Date(arr[idx - 1].created_at) : null;
@@ -230,30 +231,54 @@ export const ChatWindow: React.FC<Props> = ({ peerId, service, onClose, embedded
                     {curDate.toDateString()}
                   </div>
                 )}
-                <div className={`max-w-[75%] px-3 py-2 rounded-lg ${m.sender_id === user?.id ? 'bg-emerald-600 text-white self-end ml-auto' : 'bg-gray-100 text-gray-800'}`}>
-                  <div className="text-sm whitespace-pre-wrap">{m.text}</div>
-                  <div className="text-[10px] opacity-60 mt-1">{curDate.toLocaleTimeString()}</div>
+                <div className={`flex ${m.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[70%] px-4 py-2 rounded-2xl text-sm ${m.sender_id === user?.id ? 'bg-emerald-600 text-white rounded-br-none' : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none'}`}>
+                    <div className="whitespace-pre-wrap break-words">{m.text}</div>
+                    <div className={`text-[11px] mt-1 ${m.sender_id === user?.id ? 'text-emerald-100' : 'text-gray-500'}`}>
+                      {curDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {m.sender_id === user?.id && ' ✓'}
+                    </div>
+                  </div>
                 </div>
               </React.Fragment>
             );
           })}
+          {peerTyping && (
+            <div className="flex justify-start">
+              <div className="px-4 py-2 rounded-2xl bg-white border border-gray-200">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-        <div className="p-3 border-t border-gray-200 flex items-center gap-2">
+        <div className="p-3 border-t border-gray-200 flex items-center gap-2 bg-white">
           <input
             value={input}
             onChange={(e) => handleInputChange(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
             placeholder="Type a message..."
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
+            className="flex-1 border border-gray-300 rounded-full px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
           />
-          <button onClick={handleSend} className="px-3 py-2 rounded bg-emerald-600 text-white flex items-center gap-1">
+          <button
+            onClick={handleSend}
+            className="px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1 transition font-medium text-sm"
+          >
             <Send className="w-4 h-4" />
-            Send
+            {embedded ? 'Send' : ''}
           </button>
         </div>
-        {(peerTyping || sentTick > 0) && (
-          <div className="px-4 pb-3 text-xs text-gray-400 select-none flex items-center gap-4">
-            {peerTyping && <span>typing…</span>}
-            {sentTick > 0 && <span>Message sent</span>}
+        {sentTick > 0 && (
+          <div className="px-4 pb-2 text-xs text-gray-500 text-center select-none">
+            ✓ Message sent
           </div>
         )}
       </div>

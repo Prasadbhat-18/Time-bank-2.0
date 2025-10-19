@@ -470,7 +470,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser(user);
         saveUserToStorage(user);
       } else {
-        throw new Error('Failed to get user from Google login');
+        // If null, a redirect flow was likely initiated; no action needed here.
+        return;
       }
     } catch (error: any) {
       console.error('Google login error:', error);

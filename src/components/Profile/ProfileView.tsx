@@ -69,6 +69,15 @@ export const ProfileView: React.FC = () => {
       }
     }, [user]);
 
+    // Listen for booking completion to reload profile (XP/level/credits)
+    useEffect(() => {
+      const handler = () => {
+        window.location.reload(); // simplest: reloads ProfileView to update XP bar and wallet
+      };
+      window.addEventListener('timebank:refreshProfileAndDashboard', handler);
+      return () => window.removeEventListener('timebank:refreshProfileAndDashboard', handler);
+    }, []);
+
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {

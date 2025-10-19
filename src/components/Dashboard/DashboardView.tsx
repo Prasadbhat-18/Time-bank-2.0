@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { TimeCredit, Booking, Service, Review } from '../../types';
 import { dataService } from '../../services/dataService';
-import { ServiceMonitor } from '../Services/ServiceMonitor';
+import { bookingNotificationService } from '../../services/bookingNotificationService';
 
 export const DashboardView: React.FC = () => {
   const { user } = useAuth();
@@ -22,11 +22,18 @@ export const DashboardView: React.FC = () => {
   const [recentReviews, setRecentReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [newBookingBanner, setNewBookingBanner] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
       loadDashboardData();
     }
+    // Listen for booking completion to reload dashboard (XP/credits)
+    const handler = () => {
+      loadDashboardData();
+    };
+    window.addEventListener('timebank:refreshProfileAndDashboard', handler);
+    return () => window.removeEventListener('timebank:refreshProfileAndDashboard', handler);
   }, [user]);
 
   const loadDashboardData = async () => {
@@ -40,15 +47,29 @@ export const DashboardView: React.FC = () => {
     ]);
 
     setTimeCredit(credit);
-    setUpcomingBookings(
-      bookings
-        .filter((b) => b.status !== 'completed' && b.status !== 'cancelled')
-        .slice(0, 3)
-    );
+    // Sort newest first so latest requests appear on top
+    const active = bookings
+      .filter((b) => b.status !== 'completed' && b.status !== 'cancelled')
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 3);
+    setUpcomingBookings(active);
     setRecentServices(services.slice(0, 3));
     setRecentReviews(reviews.slice(0, 3));
     setLoading(false);
   };
+
+  // Live notification banner for providers when a new booking is created
+  useEffect(() => {
+    if (!user) return;
+    const unsub = bookingNotificationService.subscribeToProviderBookings(user.id, (booking) => {
+      const requester = booking?.requester?.username || booking?.requester_name || booking?.requester_id || 'A user';
+      const service = booking?.service?.title || booking?.service_title || 'your service';
+      setNewBookingBanner(`${requester} booked "${service}"`);
+      loadDashboardData();
+      setTimeout(() => setNewBookingBanner(null), 5000);
+    });
+    return () => { try { unsub(); } catch {} };
+  }, [user?.id]);
 
   if (loading) {
     return (
@@ -60,6 +81,19 @@ export const DashboardView: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 relative">
+      {newBookingBanner && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-40 px-4 py-2 rounded-lg bg-emerald-600 text-white shadow-lg flex items-center gap-3">
+          <span>{newBookingBanner}</span>
+          <button
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('timebank:navigate', { detail: { view: 'bookings' } }));
+            }}
+            className="px-3 py-1 rounded bg-white/15 hover:bg-white/25 border border-white/20 text-white text-sm"
+          >
+            View booking
+          </button>
+        </div>
+      )}
       {/* Floating How it Works Button */}
       <button
         className="fixed bottom-20 md:bottom-8 left-4 md:left-8 z-50 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-full shadow-lg flex items-center gap-2 hover:scale-105 hover:shadow-emerald-500/40 transition-all text-sm md:text-lg font-semibold"
@@ -333,8 +367,7 @@ export const DashboardView: React.FC = () => {
         </div>
       </div>
 
-      {/* Firebase Service Monitor */}
-      <ServiceMonitor />
+      {/* Firebase Service Monitor removed per request */}
     </div>
   );
 };

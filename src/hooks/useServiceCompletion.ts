@@ -5,7 +5,7 @@ import {
   getCreditBonus
 } from '../services/levelService';
 
-interface CompletionRewards {
+export interface CompletionRewards {
   baseXP: number;
   baseCredits: number;
   bonuses: {
@@ -81,6 +81,35 @@ export const useServiceCompletion = (
 
   return rewards;
 };
+
+// Pure, non-hook version for use in event handlers
+export function computeServiceCompletion(
+  rating: number = 5,
+  baseCredits: number = 10,
+  isFirstService: boolean = false,
+  consecutiveDays: number = 1,
+  currentUserLevel: number = 1,
+  servicesCompletedThisWeek: number = 0,
+  ratingThisWeek: number = 5
+): CompletionRewards {
+  const baseXP = calculateServiceExperience(rating, isFirstService, consecutiveDays);
+  const highRatingBonus = rating === 5 ? EXPERIENCE_REWARDS.HIGH_RATING : 0;
+  const consecutiveBonus = consecutiveDays > 1 ? EXPERIENCE_REWARDS.CONSECUTIVE_SERVICES * (consecutiveDays - 1) : 0;
+  const perfectWeekBonus = servicesCompletedThisWeek >= 4 && ratingThisWeek >= 5 ? EXPERIENCE_REWARDS.PERFECT_WEEK : 0;
+  const totalXP = baseXP + highRatingBonus + consecutiveBonus + perfectWeekBonus;
+  const creditBonus = getCreditBonus(currentUserLevel);
+  const bonusMultiplier = 1 + creditBonus / 100;
+  const totalCredits = Math.round(baseCredits * bonusMultiplier);
+  const effectiveCredits = Math.round((baseCredits * creditBonus) / 100);
+  return {
+    baseXP,
+    baseCredits,
+    bonuses: { highRatingBonus, consecutiveBonus, perfectWeekBonus },
+    totalXP,
+    totalCredits,
+    effectiveCredits,
+  };
+}
 
 /**
  * Format reward display

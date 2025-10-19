@@ -97,6 +97,16 @@ function AppContent() {
     };
   }, [user?.id]);
 
+  // Global navigation bridge (e.g., Dashboard popup -> Bookings)
+  useEffect(() => {
+    const handler = (e: any) => {
+      const v = e?.detail?.view as View | undefined;
+      if (v) setCurrentView(v);
+    };
+    window.addEventListener('timebank:navigate', handler);
+    return () => window.removeEventListener('timebank:navigate', handler);
+  }, []);
+
   useEffect(() => {
     const root = document.documentElement;
     if (dark) {

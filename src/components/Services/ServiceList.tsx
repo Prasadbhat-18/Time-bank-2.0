@@ -80,6 +80,22 @@ export const ServiceList: React.FC = () => {
 
   const categories = Array.from(new Set(skills.map((s) => s.category)));
 
+  const timeAgo = (iso?: string) => {
+    if (!iso) return '';
+    const d = new Date(iso).getTime();
+    const diff = Date.now() - d;
+    const sec = Math.floor(diff / 1000);
+    if (sec < 10) return 'just now';
+    if (sec < 60) return `${sec}s ago`;
+    const min = Math.floor(sec / 60);
+    if (min < 60) return `${min}m ago`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}h ago`;
+    const day = Math.floor(hr / 24);
+    if (day === 1) return '1 day ago';
+    return `${day} days ago`;
+  };
+
   const handleBookService = (service: Service) => {
     setSelectedService(service);
     setShowBookingModal(true);
@@ -219,9 +235,12 @@ export const ServiceList: React.FC = () => {
                       >
                         {service.type === 'offer' ? 'Service Offered' : 'Service Needed'}
                       </span>
-                      <h3 className="text-lg font-semibold text-gray-800 mt-2 group-hover:text-emerald-600 transition">
-                        {service.title}
-                      </h3>
+                      <div className="flex items-center gap-2 mt-2">
+                        <h3 className="text-lg font-semibold text-gray-800 group-hover:text-emerald-600 transition">
+                          {service.title}
+                        </h3>
+                        <span className="text-xs text-gray-500">{timeAgo(service.created_at)}</span>
+                      </div>
                     </div>
                   </div>
 

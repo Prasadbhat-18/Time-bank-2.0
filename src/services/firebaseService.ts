@@ -25,7 +25,7 @@ import {
   limit,
 } from 'firebase/firestore';
 import { User } from '../types';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 
 function mapFirebaseUserToUser(uid: string, data: Record<string, unknown>): User {
   return {
@@ -151,43 +151,70 @@ class FirebaseService {
   async loginWithGoogle(): Promise<User | null> {
     try {
       const provider = new GoogleAuthProvider();
-      const cred = await signInWithPopup(auth, provider);
-      const fbUser = cred.user;
-      const uid = fbUser.uid;
-      // Try to fetch user doc from Firestore, create if missing
+
+      // Helper to ensure a Firestore user document exists for the Firebase auth user
+      const ensureUserDoc = async (firebaseUser: any): Promise<User> => {
+        const uid = firebaseUser.uid;
+        try {
+          const userDoc = await getDoc(doc(db, 'users', uid));
+          if (userDoc.exists()) {
+            return mapFirebaseUserToUser(uid, userDoc.data());
+          }
+        } catch (error: any) {
+          if (error.code === 'permission-denied' || /permission/i.test(error.message || '')) {
+            throw new Error('Firestore permission error while fetching Google user: check your Firestore rules (Missing or insufficient permissions)');
+          }
+        }
+
+        // If user doc doesn't exist, create a minimal profile
+        const data = {
+          email: firebaseUser.email || '',
+          username: firebaseUser.displayName || (firebaseUser.email || '').split('@')[0],
+          bio: '',
+          reputation_score: 5.0,
+          total_reviews: 0,
+          created_at: new Date().toISOString(),
+          // Level system fields
+          level: 1,
+          experience_points: 0,
+          services_completed: 0,
+          custom_credits_enabled: false,
+        };
+        try {
+          await setDoc(doc(db, 'users', uid), data);
+        } catch (error: any) {
+          if (error.code === 'permission-denied' || /permission/i.test(error.message || '')) {
+            throw new Error('Firestore permission error while creating Google user: check your Firestore rules (Missing or insufficient permissions)');
+          }
+        }
+        return mapFirebaseUserToUser(uid, data);
+      };
+
+      // If we're coming back from a redirect, handle it first
       try {
-        const userDoc = await getDoc(doc(db, 'users', uid));
-        if (userDoc.exists()) {
-          return mapFirebaseUserToUser(uid, userDoc.data());
+        const redirectResult = await getRedirectResult(auth);
+        if (redirectResult && redirectResult.user) {
+          return await ensureUserDoc(redirectResult.user);
         }
-      } catch (error: any) {
-        if (error.code === 'permission-denied' || /permission/i.test(error.message || '')) {
-          throw new Error('Firestore permission error while fetching Google user: check your Firestore rules (Missing or insufficient permissions)');
-        }
+      } catch (e) {
+        // Non-fatal; continue to popup attempt
       }
 
-      // If user doc doesn't exist, create a simple user record
-      const data = {
-        email: fbUser.email || '',
-        username: fbUser.displayName || (fbUser.email || '').split('@')[0],
-        bio: '',
-        reputation_score: 5.0,
-        total_reviews: 0,
-        created_at: new Date().toISOString(),
-        // Level system fields
-        level: 1,
-        experience_points: 0,
-        services_completed: 0,
-        custom_credits_enabled: false,
-      };
+      // Try popup first
       try {
-        await setDoc(doc(db, 'users', uid), data);
-      } catch (error: any) {
-        if (error.code === 'permission-denied' || /permission/i.test(error.message || '')) {
-          throw new Error('Firestore permission error while creating Google user: check your Firestore rules (Missing or insufficient permissions)');
+        const cred = await signInWithPopup(auth, provider);
+        return await ensureUserDoc(cred.user);
+      } catch (popupErr: any) {
+        // If popup is blocked or not available (Safari/iOS), fall back to redirect
+        const code = popupErr?.code || '';
+        if (code === 'auth/popup-blocked' || code === 'auth/cancelled-popup-request') {
+          await signInWithRedirect(auth, provider);
+          // After redirect, the app will reload; result will be handled on next load
+          return null;
         }
+        // Re-throw other popup errors
+        throw popupErr;
       }
-      return mapFirebaseUserToUser(uid, data);
     } catch (error: any) {
       // Map common Firebase auth errors to clearer messages
       if (error.code === 'auth/popup-blocked') {

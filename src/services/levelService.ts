@@ -440,6 +440,23 @@ export function getDiscountPercentage(level: number): number {
 }
 
 /**
+ * One-time credits granted when a user levels up.
+ * This replaces per-service bonus credits so providers only get pre-agreed
+ * credits on each service, and receive a small bonus on level up instead.
+ */
+export function getLevelUpBonusCredits(level: number): number {
+  switch (level) {
+    case 2: return 1;   // small nudge for early progression
+    case 3: return 2;
+    case 4: return 3;
+    case 5: return 5;   // milestone: custom pricing
+    case 6: return 7;
+    case 7: return 10;  // pinnacle reward
+    default: return 0;  // no bonus at level 1 or beyond defined caps
+  }
+}
+
+/**
  * Apply level bonuses to credit amount
  */
 export function applyLevelBonus(baseCredits: number, level: number): number {

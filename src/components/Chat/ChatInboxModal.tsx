@@ -23,11 +23,25 @@ export const ChatInboxModal: React.FC<Props> = ({ onSelectChat, onClose }) => {
     let stop = false;
     const unsubs: Array<() => void> = [];
     (async () => {
-      // Get all chats for this user
-      const allChats = await getUserChats(user.id);
-      if (stop) return;
-      setChats(allChats);
+      // Keep chats list live
+      const unsubList = chatService.subscribeUserChats(user.id, (liveChats) => {
+        if (stop) return;
+        setChats(liveChats);
+        // Ensure subscriptions exist per chat
+        liveChats.forEach((chat: Chat) => {
+          // Fetch peer info
+          const peerId = chat.participants.find((id) => id !== user.id);
+          if (peerId && !peerInfo[peerId]) {
+            dataService.getUserById(peerId).then((info) => {
+              setPeerInfo((prev) => ({ ...prev, [peerId]: info }));
+            });
+          }
+        });
+      });
+      unsubs.push(unsubList);
+
       // For each chat, subscribe to messages and count unread
+      const allChats = await getUserChats(user.id);
       allChats.forEach((chat: Chat) => {
         // Fetch peer info
         const peerId = chat.participants.find((id) => id !== user.id);

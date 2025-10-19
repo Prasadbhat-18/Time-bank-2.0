@@ -4,11 +4,14 @@ import { Calendar, Clock, User, CheckCircle, XCircle, AlertCircle, ThumbsUp, Thu
 import { Booking } from '../../types';
 import { dataService } from '../../services/dataService';
 import { ReviewModal } from './ReviewModal';
+import { bookingNotificationService } from '../../services/bookingNotificationService';
 import ServiceCompletionCelebration from '../Services/ServiceCompletionCelebration';
-import { useServiceCompletion } from '../../hooks/useServiceCompletion';
+import { computeServiceCompletion } from '../../hooks/useServiceCompletion';
+import { calculateLevel } from '../../services/levelService';
+import { getLevelUpBonusCredits } from '../../services/levelService';
 
 export const BookingList: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed' | 'completed'>('all');
@@ -17,6 +20,7 @@ export const BookingList: React.FC = () => {
   const [confirmingBooking, setConfirmingBooking] = useState<string | null>(null);
   const [decliningBooking, setDecliningBooking] = useState<string | null>(null);
   const [providerNotes, setProviderNotes] = useState('');
+  const [newBookingBanner, setNewBookingBanner] = useState<string | null>(null);
   
   // Celebration modal state
   const [showCelebration, setShowCelebration] = useState(false);
@@ -36,6 +40,20 @@ export const BookingList: React.FC = () => {
     }
   }, [user]);
 
+  // Live notification for providers when a new booking is created
+  useEffect(() => {
+    if (!user) return;
+    const unsub = bookingNotificationService.subscribeToProviderBookings(user.id, (booking: any) => {
+      const requester = booking?.requester?.username || booking?.requester_name || booking?.requester_id || 'A user';
+      const service = booking?.service?.title || booking?.service_title || 'your service';
+      setNewBookingBanner(`${requester} booked "${service}"`);
+      loadBookings();
+      // auto-hide after 5s
+      setTimeout(() => setNewBookingBanner(null), 5000);
+    });
+    return () => { try { unsub(); } catch {} };
+  }, [user?.id]);
+
   const loadBookings = async () => {
     if (user) {
       const data = await dataService.getBookings(user.id);
@@ -45,40 +63,52 @@ export const BookingList: React.FC = () => {
   };
 
   const handleUpdateStatus = async (bookingId: string, status: 'confirmed' | 'completed' | 'cancelled') => {
+    const booking = bookings.find(b => b.id === bookingId);
     if (status === 'completed' && user) {
-      // Calculate rewards for completion
-      const booking = bookings.find(b => b.id === bookingId);
-      if (booking) {
-        const baseCredits = booking.duration_hours || 10;
-        
-        // Simulate reward calculation (in real app, this would come from backend)
-        const previousLevel = user.level || 1;
-        const rewards = useServiceCompletion(
-          5, // rating
-          baseCredits,
-          false, // isFirstService
-          1, // consecutiveDays
-          previousLevel,
-          (user.services_completed || 0) + 1,
-          5
-        );
-        
-        // Show celebration
-        setCompletionData({
-          xpEarned: rewards.totalXP,
-          creditsEarned: rewards.totalCredits,
-          newLevel: previousLevel, // In real app, calculate from new XP
-          previousLevel,
-          totalServicesCompleted: (user.services_completed || 0) + 1,
-          rating: 5,
-          bonusInfo: rewards.bonuses
-        });
-        setShowCelebration(true);
+      const baseCredits = booking && booking.service?.credits_per_hour
+        ? (booking.duration_hours || 0) * (booking.service.credits_per_hour || 1)
+        : (booking?.duration_hours || 10);
+      const previousLevel = user.level || 1;
+      const prevXP = user.experience_points || 0;
+      const rewards = computeServiceCompletion(5, baseCredits, false, 1, previousLevel, (user.services_completed || 0) + 1, 5);
+      const prospectiveLevel = calculateLevel(prevXP + rewards.totalXP);
+      const levelUpBonus = prospectiveLevel > previousLevel ? getLevelUpBonusCredits(prospectiveLevel) : 0;
+      // Show celebration immediately: credits = pre-agreed base (+ level-up bonus if applicable)
+      setCompletionData({
+        xpEarned: rewards.totalXP,
+        creditsEarned: baseCredits + levelUpBonus,
+        newLevel: prospectiveLevel,
+        previousLevel,
+        totalServicesCompleted: (user.services_completed || 0) + 1,
+        rating: 5,
+        bonusInfo: rewards.bonuses,
+      });
+      setShowCelebration(true);
+    }
+
+    try {
+      await dataService.updateBooking(bookingId, { status });
+    } finally {
+      await loadBookings();
+      // If we just completed and the current user is the provider, refresh their profile and wallet in AuthContext
+      if (status === 'completed' && user && booking && booking.provider_id === user.id) {
+        try {
+          const updatedProvider = await dataService.getUserById(user.id);
+          const updatedCredits = await dataService.getTimeCredits(user.id);
+          if (updatedProvider) {
+            await updateUser?.({
+              level: updatedProvider.level,
+              experience_points: updatedProvider.experience_points,
+              services_completed: updatedProvider.services_completed,
+              custom_credits_enabled: updatedProvider.custom_credits_enabled,
+              // Optionally update wallet fields if you store them on user
+            });
+          }
+          // Dispatch a custom event to trigger ProfileView and DashboardView reloads for XP bar and wallet
+          window.dispatchEvent(new CustomEvent('timebank:refreshProfileAndDashboard'));
+        } catch {}
       }
     }
-    
-    await dataService.updateBooking(bookingId, { status });
-    await loadBookings();
   };
 
   const handleLeaveReview = (booking: Booking) => {
@@ -111,6 +141,7 @@ export const BookingList: React.FC = () => {
   };
 
   const filteredBookings = bookings.filter((b) => filter === 'all' || b.status === filter);
+  const sortedBookings = [...filteredBookings].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const getStatusBadge = (status: string) => {
     const styles = {
@@ -168,14 +199,21 @@ export const BookingList: React.FC = () => {
         ))}
       </div>
 
+      {/* New booking popup banner */}
+      {newBookingBanner && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-40 px-4 py-2 rounded-lg bg-emerald-600 text-white shadow-lg">
+          {newBookingBanner}
+        </div>
+      )}
+
       <div className="space-y-4">
-        {filteredBookings.length === 0 ? (
+        {sortedBookings.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center shadow-lg border border-gray-100">
             <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-400" />
             <p className="text-gray-500">No bookings found</p>
           </div>
         ) : (
-          filteredBookings.map((booking) => {
+          sortedBookings.map((booking) => {
             const isProvider = booking.provider_id === user?.id;
             const otherUser = isProvider ? booking.requester : booking.provider;
 

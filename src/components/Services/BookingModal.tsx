@@ -50,8 +50,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({ service, onClose, on
         confirmation_status: 'pending'
       });
 
-      // Show warning if user is approaching or has exceeded limit
-      if (!canRequest) {
+      // Only show the limit warning if this booking puts the user over the limit (i.e., after booking, canRequestService returns false)
+      const newServicesRequested = servicesRequested + 1;
+      const isBarred = !canRequestService(servicesCompleted, newServicesRequested);
+      if (isBarred) {
         setShowLimitWarning(true);
       } else {
         onBooked();
@@ -234,14 +236,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({ service, onClose, on
             {/* Right Column: Chat Panel */}
             {showChat && (
               <div className="hidden lg:flex flex-col border border-gray-200 rounded-lg overflow-hidden h-[600px]">
-                <ChatWindow peerId={service.provider_id} service={service} onClose={() => setShowChat(false)} />
+                <ChatWindow peerId={service.provider_id} service={service} embedded={true} />
               </div>
             )}
 
             {/* Mobile Chat: Full width below form */}
             {showChat && (
               <div className="lg:hidden col-span-1 border border-gray-200 rounded-lg overflow-hidden h-[400px]">
-                <ChatWindow peerId={service.provider_id} service={service} onClose={() => setShowChat(false)} />
+                <ChatWindow peerId={service.provider_id} service={service} embedded={true} />
               </div>
             )}
           </div>
