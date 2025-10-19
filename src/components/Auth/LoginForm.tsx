@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Eye, EyeOff, Clock, Lock, Mail, Phone, Timer } from 'lucide-react';
+import { Eye, EyeOff, Clock, Lock, Mail, Phone } from 'lucide-react';
 import { ResetPasswordModal } from './ResetPasswordModal';
 
 interface LoginFormProps {
@@ -8,7 +8,7 @@ interface LoginFormProps {
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
-  const { login, loginWithPhone, loginWithGoogle, loginDemo } = useAuth();
+  const { login, loginWithPhone, loginWithGoogle } = useAuth();
   const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -85,18 +85,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
   };
 
   const handleForgotPassword = () => setShowReset(true);
-  
-  const handleDemoLogin = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      await loginDemo();
-    } catch (err: any) {
-      setError(err.message || 'Demo login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden">
@@ -180,28 +168,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
                 <div className="text-center">
                   <div className="text-2xl mb-2">G</div>
                   <div className="text-sm text-white font-medium">Google</div>
-                </div>
-              </button>
-
-              {/* Demo User */}
-              <button
-                type="button"
-                onClick={async () => {
-                  setLoading(true);
-                  try {
-                    await login('demo@timebank.com', 'demo123');
-                  } catch (err: any) {
-                    setError(err.message);
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-                disabled={loading}
-                className="p-4 bg-cyan-500/20 border border-cyan-500/50 rounded-xl hover:bg-cyan-500/30 transition-all duration-300 disabled:opacity-50"
-              >
-                <div className="text-center">
-                  <Timer className="w-6 h-6 mx-auto mb-2" />
-                  <div className="text-sm text-white font-medium">Demo</div>
                 </div>
               </button>
             </div>
@@ -321,7 +287,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
                         )}
                         {otpSent && !otpLoading && (
                           <div className="flex items-center gap-2 text-green-300">
-                            <Timer className="w-4 h-4 animate-pulse" />
+                            <Clock className="w-4 h-4 animate-pulse" />
                             OTP sent to {phone}
                             {generatedOTP && (
                               <span className="px-2 py-1 bg-green-500/20 text-green-300 rounded font-mono text-xs border border-green-400/30">
@@ -383,33 +349,23 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
             </form>
 
             {/* Footer Actions */}
-            <div className="mt-6 text-center space-y-3">
+            <div className="mt-8 flex items-center justify-center gap-6 text-sm">
               <button
                 type="button"
                 onClick={onToggleMode}
-                className="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors"
+                className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors duration-200 hover:underline"
               >
                 Create Account
               </button>
               
-              <div className="text-white/40">•</div>
+              <div className="w-px h-4 bg-white/20"></div>
               
               <button
                 type="button"
                 onClick={handleForgotPassword}
-                className="text-cyan-400/70 hover:text-cyan-300 text-sm transition-colors"
+                className="text-cyan-400/80 hover:text-cyan-300 font-medium transition-colors duration-200 hover:underline"
               >
                 Forgot Password?
-              </button>
-              
-              <div className="text-white/40">•</div>
-              
-              <button
-                type="button"
-                onClick={handleDemoLogin}
-                className="text-emerald-400 hover:text-emerald-300 text-sm font-semibold transition-colors"
-              >
-                Browse as Demo
               </button>
             </div>
           </div>
